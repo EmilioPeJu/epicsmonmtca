@@ -53,12 +53,28 @@ class MTCAModule(object):
         self.sensors = []
 
     @property
-    def name(self):
+    def manufacturer(self):
+        return self.fru.product_info_area.manufacturer.value
+
+    @property
+    def part_number(self):
         return self.fru.product_info_area.part_number.value
 
     @property
-    def manufacturer(self):
-        return self.fru.product_info_area.manufacturer.value
+    def serial_number(self):
+        return self.fru.product_info_area.serial_number.value
+
+    @property
+    def version(self):
+        return self.fru.product_info_area.version.value
+
+    @property
+    def name(self):
+        return self.part_number
+
+    @property
+    def product_name(self):
+        return self.fru.board_info_area.product_name.value
 
     def __repr__(self):
         return "<{} {}>".format(self.slot_id[0], self.name)

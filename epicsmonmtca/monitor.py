@@ -75,12 +75,31 @@ class EpicsMonMTCA(object):
         self.ipmi.target = Target(ipmb_address=0x82)
         self.ipmi.session.establish()
 
-    def create_amc_name_records(self, **kwargs):
+    def create_amc_fru_records(self, **kwargs):
         for slot_id in self.slots:
-            if slot_id[0] == 'AMC':
-                string_record = builder.stringIn(
-                    'AMC{}:NAME'.format(slot_id[1]),
+            if slot_id[0] in ('AMC', 'CU', 'PM', 'MCMC'):
+                builder.stringIn(
+                    '{}{}:MANUFACTURER'.format(slot_id[0], slot_id[1]),
+                    initial_value=self.slots[slot_id].manufacturer,
+                    **kwargs)
+                builder.stringIn(
+                    '{}{}:PARTNUMBER'.format(slot_id[0], slot_id[1]),
+                    initial_value=self.slots[slot_id].part_number, **kwargs)
+                builder.stringIn(
+                    '{}{}:SERIALNUMBER'.format(slot_id[0], slot_id[1]),
+                    initial_value=self.slots[slot_id].serial_number,
+                    **kwargs)
+                builder.stringIn(
+                    '{}{}:VERSION'.format(slot_id[0], slot_id[1]),
+                    initial_value=self.slots[slot_id].version,
+                    **kwargs)
+                builder.stringIn(
+                    '{}{}:NAME'.format(slot_id[0], slot_id[1]),
                     initial_value=self.slots[slot_id].name, **kwargs)
+                builder.stringIn(
+                    '{}{}:PRODUCTNAME'.format(slot_id[0], slot_id[1]),
+                    initial_value=self.slots[slot_id].product_name,
+                    **kwargs)
 
     def _handle_sdr_full_sensor_record(self, entry):
         log.info('Monitoring full sensor for %s', entry.name)
@@ -163,7 +182,7 @@ class EpicsMonMTCA(object):
     def watch_sensors(self, polling_period=None):
         if not self._to_monitor:
             self.process_sdr_repository()
-            self.create_amc_name_records()
+            self.create_amc_fru_records()
 
         if not self.sensor_thread:
             if polling_period:
@@ -177,7 +196,7 @@ class EpicsMonMTCA(object):
     def watch_sel(self, polling_period=None):
         if not self._to_monitor:
             self.process_sdr_repository()
-            self.create_amc_name_records()
+            self.create_amc_fru_records()
 
         if not self.sel_thread:
             if polling_period:
