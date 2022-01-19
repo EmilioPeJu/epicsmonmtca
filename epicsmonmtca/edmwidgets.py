@@ -33,7 +33,6 @@ title "${title}"
 showGrid
 snapToGrid
 gridSize 8
-disableScroll
 endScreenProperties
 ''').safe_substitute(**locals())
 
@@ -345,3 +344,44 @@ symbols {
 topShadowColor index 1
 endObjectProperties
 ''').safe_substitute(**locals())
+
+
+def embedded_grid(title, w_h_filenames, max_width=1600):
+    """ Creates a grid of embedded screens
+        Arguments:
+           title: title of the screen
+           w_h_filenames: a list of tuples with (width, height, name) of
+                            each screen in question
+           max_width: the maximum width beyond which a new row is created
+                      in the grid
+        Returns:
+           A tuple with the edm description of a grid of embedded screens and
+           the screen size
+    """
+    row_w = 0
+    row_h = 0
+    max_w = 0
+    prev_max_h = BH + GRID
+    max_h = prev_max_h
+    x = GRID
+    y = BH + GRID
+    macros = ""
+    parts = []
+
+    for part_w, part_h, part_filename in w_h_filenames:
+        if x + part_w >= max_width:
+            x = GRID
+            y += row_h + GRID
+            prev_max_h += row_h + GRID
+            row_w = 0
+        parts.append(embed(x, y, part_w, part_h, part_filename, macros))
+        row_w += part_w
+        max_w = max(max_w, row_w)
+        row_h = max(row_h, part_h + GRID)
+        max_h = max(max_h, row_h + prev_max_h)
+        x += part_w
+
+    max_w += 2 * GRID
+    parts.insert(0, banner(max_w, title))
+    parts.insert(0, screen(max_w, max_h, title))
+    return "".join(parts), (max_w, max_h)
