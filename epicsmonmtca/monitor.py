@@ -16,7 +16,7 @@ from epicsmonmtca.ipmiutils import (hs_states2string, get_sdr_egu,
                                     get_sdr_prec, threshold_offsets_msg)
 from epicsmonmtca.manifest import create_manifest
 from epicsmonmtca.mtcautils import (entity_to_slot_id, get_slot_fru_id,
-                                    MTCAModule)
+                                    MTCAModule, valid_mtca_module_types)
 from epicsmonmtca.timeutils import reset_timer, wait_period
 
 log = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class EpicsMonMTCA(object):
 
     def create_amc_fru_records(self, **kwargs):
         for slot_id in self.slots:
-            if slot_id[0] in ('AMC', 'CU', 'PM', 'MCMC'):
+            if slot_id[0] in valid_mtca_module_types:
                 builder.stringIn(
                     '{}{}:MANUFACTURER'.format(slot_id[0], slot_id[1]),
                     initial_value=self.slots[slot_id].manufacturer,
@@ -112,6 +112,7 @@ class EpicsMonMTCA(object):
         mtca_mod = self.get_slot_module(slot_id)
         if not mtca_mod:
             return  # ignore sensors for cards not inserted
+
         mtca_mod.sensors.append(entry)
         infotype = InfoType.FULL
         EGU = get_sdr_egu(entry)

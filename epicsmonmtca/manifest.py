@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from collections import namedtuple
 
+from epicsmonmtca.mtcautils import valid_mtca_module_types
+
 ManifestModule = namedtuple('ManifestModule', ['name', 'sensors'])
 ManifestSensor = namedtuple('ManifestSensor', ['name'])
 SENSOR_START_MARK = '-'
@@ -33,7 +35,7 @@ def parse_manifest(filepath):
                 field, key = sline.split(':')
                 mod_type, mod_number = field.split(',')
                 slot_id = (mod_type.strip(), int(mod_number))
-                if slot_id[0] not in ('AMC', 'PM', 'CU', 'MCMC'):
+                if slot_id[0] not in valid_mtca_module_types:
                     raise ValueError('Invalid module type')
                 slots[slot_id] = ManifestModule(key, [])
 

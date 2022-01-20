@@ -8,7 +8,7 @@ MAX_AMC = 12
 MAX_CU = 2
 MAX_PM = 4
 MAX_MCMC = 2
-valid_mtca_modules = ["AMC", "PM", "CU", "MCMC", "CARRIER"]
+valid_mtca_module_types = ["AMC", "PM", "CU", "MCMC", "CARRIER"]
 fruid_base_offsets = {
     'AMC': 5,
     'PM': 50,
@@ -47,7 +47,7 @@ def entity_to_slot_id(entity_id, instance_id):
 
 class MTCAModule(object):
     def __init__(self, slot_id, fru):
-        if slot_id[0] not in valid_mtca_modules:
+        if slot_id[0] not in valid_mtca_module_types:
             raise ValueError("Module type not valid")
 
         self.slot_id = slot_id

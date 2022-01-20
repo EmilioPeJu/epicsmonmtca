@@ -9,6 +9,7 @@ from epicsmonmtca.epicsutils import get_sensor_pv_suffix
 from epicsmonmtca.edmwidgets import (banner, embed, embedded_grid,
                                      related_display, screen, static_text,
                                      text_monitor, BH, GRID, TH, TW, WH, WW)
+from epicsmonmtca.mtcautils import valid_mtca_module_types
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,8 @@ def create_edm(crate_name, slots, output_dir):
     main_slot_type = 'AMC'
     # this slot types appear in separate screens and
     # they are linked in the main screen
-    extra_slot_types = ['CU', 'PM', 'MCMC']
+    extra_slot_types = list(valid_mtca_module_types)
+    extra_slot_types.remove(main_slot_type)
     for slot_type in extra_slot_types:
         create_edm_for_slot_type(crate_name, slots, slot_type, output_dir)
     title = crate_name
