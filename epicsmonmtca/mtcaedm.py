@@ -57,9 +57,9 @@ def create_edm(crate_name, slots, output_dir):
 
     for slot_type in extra_slot_types:
         parts.append(related_display(
-            x, y, 64, 24, slot_type,
-        x += 64 + GRID
+            x, y, 74, 24, slot_type,
             "{}-{}.edl".format(crate_name, slot_type), macros))
+        x += 74 + GRID
 
     create_edm_for_info(crate_name, slots, output_dir)
     parts.append(related_display(
