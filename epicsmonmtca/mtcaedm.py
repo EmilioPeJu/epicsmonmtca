@@ -2,7 +2,7 @@
 import logging
 
 from os import chmod, path, stat
-from stat import S_IEXEC
+from stat import S_IXUSR, S_IXGRP, S_IXOTH
 
 from epicsmonmtca.manifest import parse_manifest
 from epicsmonmtca.epicsutils import get_sensor_pv_suffix
@@ -22,7 +22,7 @@ exec edm -x -eolc -m 'device={device}' '{rack_name}.edl'
 '''.format(device=pv_prefix, rack_name=rack_name))
 
     st = stat(output_path)
-    chmod(output_path, st.st_mode | S_IEXEC)
+    chmod(output_path, st.st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
 
 
 def create_edm_from_manifest(
