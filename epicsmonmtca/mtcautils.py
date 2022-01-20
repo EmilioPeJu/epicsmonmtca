@@ -39,8 +39,7 @@ def entity_to_slot_id(entity_id, instance_id):
     elif entity_id == 0xc2 \
             and instance_id >= 0x61 and instance_id < (0x61 + MAX_MCMC):
         return ("MCMC", instance_id - 0x60)
-    else:
-        return ("UNK", entity_id * 1000 + instance_id)
+    return None
 
 
 class MTCAModule(object):

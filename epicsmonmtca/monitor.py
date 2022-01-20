@@ -56,12 +56,12 @@ class EpicsMonMTCA(object):
         return self.slots.get(slot_id)
 
     def create_slot_module(self, slot_id):
-        log.info('Creating module %s%d', slot_id[0], slot_id[1])
         fru_id = get_slot_fru_id(slot_id)
         if not fru_id:
-            log.error('Cannot find fru ID for %s', slot_id)
+            log.debug('Ignoring module %s%d', slot_id[0], slot_id[1])
             return None
 
+        log.info('Identifying module %s%d', slot_id[0], slot_id[1])
         fru = self.ipmi.get_fru_inventory(fru_id)
         self.slots[slot_id] = MTCAModule(slot_id, fru)
         return self.slots[slot_id]
@@ -106,7 +106,9 @@ class EpicsMonMTCA(object):
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
-        pv_suffix = get_sensor_pv_suffix(slot_id, entry.name)
+        if not slot_id:
+            return
+
         mtca_mod = self.get_slot_module(slot_id)
         if not mtca_mod:
             return  # ignore sensors for cards not inserted
@@ -114,7 +116,8 @@ class EpicsMonMTCA(object):
         infotype = InfoType.FULL
         EGU = get_sdr_egu(entry)
         PREC = get_sdr_prec(entry)
-        record = builder.aIn(pv_suffix, EGU=EGU, PREC=PREC)
+        record = builder.aIn(
+            get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU, PREC=PREC)
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
@@ -123,7 +126,9 @@ class EpicsMonMTCA(object):
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
-        pv_suffix = get_sensor_pv_suffix(slot_id, entry.name)
+        if not slot_id:
+            return
+
         mtca_mod = self.get_slot_module(slot_id)
         if not mtca_mod:
             return  # ignore sensors for cards not inserted
@@ -131,7 +136,8 @@ class EpicsMonMTCA(object):
         mtca_mod.sensors.append(entry)
         infotype = InfoType.COMPACT
         EGU = get_sdr_egu(entry)
-        record = builder.aIn(pv_suffix, EGU=EGU)
+        record = builder.aIn(
+            get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU)
 
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
         self._to_monitor.append(SensorWatch(entry, record, infotype))
@@ -141,7 +147,8 @@ class EpicsMonMTCA(object):
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
-        pv_suffix = get_sensor_pv_suffix(slot_id, entry.name)
+        if not slot_id:
+            return
 
         (raw, states) = self.ipmi.get_sensor_reading(entry.number,
                                                      entry.owner_lun)
@@ -150,12 +157,12 @@ class EpicsMonMTCA(object):
             if not mtca_mod:
                 mtca_mod = self.create_slot_module(slot_id)
                 if not mtca_mod:
-                    log.error('Cannot create slot module %s', slot_id)
                     return
                 mtca_mod.sensors.append(entry)
 
             infotype = InfoType.HOTSWAP
-            record = builder.stringIn(pv_suffix)
+            record = builder.stringIn(
+                get_sensor_pv_suffix(slot_id, entry.name))
             self._sensor_index[(entry.number, entry.owner_lun)] = entry
             self._to_monitor.append(SensorWatch(entry, record, infotype))
 
