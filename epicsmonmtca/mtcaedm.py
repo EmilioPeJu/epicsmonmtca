@@ -13,42 +13,42 @@ from epicsmonmtca.edmwidgets import (banner, embed, embedded_grid,
 log = logging.getLogger(__name__)
 
 
-def create_edm_startup(pv_prefix, rack_name, output_path="start-gui"):
+def create_edm_startup(pv_prefix, crate_name, output_path="start-gui"):
     with open(output_path, 'w') as fhandle:
         fhandle.write('''#!/bin/bash
 TOP="$(cd $(dirname "$0"); pwd)"
 export EDMDATAFILES="$TOP"
-exec edm -x -eolc -m 'device={device}' '{rack_name}.edl'
-'''.format(device=pv_prefix, rack_name=rack_name))
+exec edm -x -eolc -m 'device={device}' '{crate_name}.edl'
+'''.format(device=pv_prefix, crate_name=crate_name))
 
     st = stat(output_path)
     chmod(output_path, st.st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
 
 
 def create_edm_from_manifest(
-        manifest_path, pv_prefix, rack_name, output_dir="data"):
+        manifest_path, pv_prefix, crate_name, output_dir="data"):
     slots = parse_manifest(manifest_path)
-    create_edm(rack_name, slots, output_dir)
+    create_edm(crate_name, slots, output_dir)
     create_edm_startup(
-        pv_prefix, rack_name, path.join(output_dir, 'start-gui'))
+        pv_prefix, crate_name, path.join(output_dir, 'start-gui'))
 
 
-def create_edm(rack_name, slots, output_dir):
+def create_edm(crate_name, slots, output_dir):
     # this slot type appears in main screen
     main_slot_type = 'AMC'
     # this slot types appear in separate screens and
     # they are linked in the main screen
     extra_slot_types = ['CU', 'PM', 'MCMC']
     for slot_type in extra_slot_types:
-        create_edm_for_slot_type(rack_name, slots, slot_type, output_dir)
-    title = rack_name
+        create_edm_for_slot_type(crate_name, slots, slot_type, output_dir)
+    title = crate_name
     macros = ""
     w, h = create_edm_for_slot_type(
-        rack_name, slots, main_slot_type, output_dir)
+        crate_name, slots, main_slot_type, output_dir)
     x, y = GRID, h
     parts = []
     parts.append(
-        embed(0, 0, w, h, "{}-AMC.edl".format(rack_name), macros))
+        embed(0, 0, w, h, "{}-AMC.edl".format(crate_name), macros))
 
     h += 24 + GRID * 2
     y += GRID
@@ -56,24 +56,24 @@ def create_edm(rack_name, slots, output_dir):
     for slot_type in extra_slot_types:
         parts.append(related_display(
             x, y, 64, 24, slot_type,
-            "{}-{}.edl".format(rack_name, slot_type), macros))
         x += 64 + GRID
+            "{}-{}.edl".format(crate_name, slot_type), macros))
 
-    create_edm_for_info(rack_name, slots, output_dir)
+    create_edm_for_info(crate_name, slots, output_dir)
     parts.append(related_display(
         x, y, 64, 24, 'INFO',
-        '{}-INFO.edl'.format(rack_name, slot_type), macros))
+        '{}-INFO.edl'.format(crate_name, slot_type), macros))
 
     parts.insert(0, screen(w, h, title))
 
-    filepath = path.join(output_dir, "{}.edl".format(rack_name))
+    filepath = path.join(output_dir, "{}.edl".format(crate_name))
     with open(filepath, 'w') as f:
         f.write("".join(parts))
 
     return (w, h)
 
 
-def create_edm_for_slot_type(rack_name, slots, slot_type, output_dir):
+def create_edm_for_slot_type(crate_name, slots, slot_type, output_dir):
     w_h_filenames = []
     for slot_id in sorted(slots):
         if slot_id[0] == slot_type:
@@ -83,9 +83,9 @@ def create_edm_for_slot_type(rack_name, slots, slot_type, output_dir):
                 slot_id, slots[slot_id], mod_filepath)
             w_h_filenames.append((part_size[0], part_size[1], mod_filename))
 
-    title = "{} {}s".format(rack_name, slot_type)
+    title = "{} {}s".format(crate_name, slot_type)
     edm_content, size = embedded_grid(title, w_h_filenames)
-    filepath = path.join(output_dir, "{}-{}.edl".format(rack_name, slot_type))
+    filepath = path.join(output_dir, "{}-{}.edl".format(crate_name, slot_type))
     with open(filepath, 'w') as f:
         f.write(edm_content)
     return size
@@ -113,12 +113,12 @@ def create_edm_for_slot(slot_id, mtca_mod, filepath):
     return size
 
 
-def create_edm_for_info(rack_name, slots, output_dir):
-    title = "{} FRU Info".format(rack_name)
+def create_edm_for_info(crate_name, slots, output_dir):
+    title = "{} FRU Info".format(crate_name)
     w_h_filenames = []
 
     for slot_id in sorted(slots):
-        mod_filename = "{}-{}{}-INFO.edl".format(rack_name,
+        mod_filename = "{}-{}{}-INFO.edl".format(crate_name,
                                                  slot_id[0],
                                                  slot_id[1])
         mod_filepath = path.join(output_dir, mod_filename)
@@ -126,7 +126,7 @@ def create_edm_for_info(rack_name, slots, output_dir):
         w_h_filenames.append((part_size[0], part_size[1], mod_filename))
 
     edm_content, size = embedded_grid(title, w_h_filenames)
-    filepath = path.join(output_dir, "{}-INFO.edl".format(rack_name))
+    filepath = path.join(output_dir, "{}-INFO.edl".format(crate_name))
     with open(filepath, 'w') as f:
         f.write(edm_content)
     return size

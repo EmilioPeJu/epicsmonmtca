@@ -17,7 +17,6 @@ def create_manifest(slots, output_path):
 
 def parse_manifest(filepath):
     slots = {}
-    rack_name = ""
     first_line = True
     slot_id = None
     with open(filepath, 'r') as fhandle:
