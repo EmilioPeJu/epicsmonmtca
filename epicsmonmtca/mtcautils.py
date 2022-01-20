@@ -8,12 +8,13 @@ MAX_AMC = 12
 MAX_CU = 2
 MAX_PM = 4
 MAX_MCMC = 2
-valid_mtca_modules = ["AMC", "CU", "PM", "MCMC", "UNK"]
+valid_mtca_modules = ["AMC", "PM", "CU", "MCMC", "CARRIER"]
 fruid_base_offsets = {
     'AMC': 5,
-    'CU': 40,
     'PM': 50,
-    'MCMC': 3
+    'CU': 40,
+    'MCMC': 3,
+    'CARRIER': 253
 }
 
 
@@ -27,7 +28,9 @@ def get_slot_fru_id(slot_id):
 
 
 def entity_to_slot_id(entity_id, instance_id):
-    if entity_id == 0xc1 \
+    if entity_id == 0xc2 and instance_id > 0 and instance_id < 10:
+        return ("CARRIER", instance_id)
+    elif entity_id == 0xc1 \
             and instance_id >= 0x61 and instance_id < (0x61 + MAX_AMC):
         return ("AMC", instance_id - 0x60)
     elif (entity_id == 0x1e or entity_id == 0x1d) \
