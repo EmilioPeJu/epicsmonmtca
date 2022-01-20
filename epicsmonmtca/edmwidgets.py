@@ -1,6 +1,6 @@
 from string import Template
 GRID = 8
-TW = GRID * 15   # default text width
+TW = GRID * 16   # default text width
 TH = GRID * 2    # default text heigth
 WH = GRID * 2    # default widget heigth
 WW = GRID * 8    # default widget width
@@ -38,6 +38,8 @@ endScreenProperties
 
 
 def static_text(x, y, s):
+    w = TW
+    h = TH
     return Template('''
 # (Static Text)
 object activeXTextClass
@@ -47,8 +49,8 @@ minor 1
 release 1
 x ${x}
 y ${y}
-w 120
-h 16
+w ${w}
+h ${h}
 font "arial-medium-r-12.0"
 fgColor index 14
 bgColor index 3
@@ -60,6 +62,8 @@ endObjectProperties
 
 
 def text_monitor(x, y, pv):
+    w = TW
+    h = TH
     return Template('''
 # (Text Monitor)
 object activeXTextDspClass:noedit
@@ -69,8 +73,8 @@ minor 6
 release 0
 x ${x}
 y ${y}
-w 120
-h 16
+w ${w}
+h ${h}
 controlPv "${pv}"
 format "float"
 font "courier-medium-r-12.0"
@@ -90,6 +94,8 @@ endObjectProperties
 
 
 def text_control(x, y, pv):
+    w = TW
+    h = TH
     return Template('''
 # (Text Control)
 object activeXTextDspClass
@@ -99,8 +105,8 @@ minor 6
 release 0
 x ${x}
 y ${y}
-w 120
-h 16
+w ${w}
+h ${h}
 controlPv "${pv}"
 font "courier-medium-r-12.0"
 fontAlign "right"
@@ -117,6 +123,8 @@ endObjectProperties
 
 
 def button_toggle(x, y, spv, rpv):
+    w = WW
+    h = WH
     return Template('''
 # (Button)
 object activeButtonClass
@@ -126,8 +134,8 @@ minor 1
 release 0
 x ${x}
 y ${y}
-w 64
-h 32
+w ${w}
+h ${h}
 fgColor index 14
 onColor index 4
 offColor index 4
@@ -217,6 +225,7 @@ endObjectProperties
 
 
 def banner(w, title="$(device)"):
+    h = BH
     return Template('''
 # (Static Text)
 object activeXTextClass
@@ -227,7 +236,7 @@ release 1
 x 0
 y 0
 w ${w}
-h 32
+h ${h}
 font "arial-medium-r-18.0"
 fontAlign "center"
 fgColor index 14
