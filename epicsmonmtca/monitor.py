@@ -38,8 +38,8 @@ class InfoType(object):
 
 
 class EpicsMonMTCA(object):
-    def __init__(self, mch_ip):
-        self._create_ipmi_session(mch_ip)
+    def __init__(self, mch_ip, backend='rmcp', user='', password=''):
+        self._create_ipmi_session(mch_ip, backend, user, password)
         self._to_monitor = []
         self._sensor_index = {}
         self.slots = {}
@@ -66,13 +66,22 @@ class EpicsMonMTCA(object):
         self.slots[slot_id] = MTCAModule(slot_id, fru)
         return self.slots[slot_id]
 
-    def _create_ipmi_session(self, ip):
-        interface = interfaces.create_interface('ipmitool',
-                                                interface_type='lan')
+    def _create_ipmi_session(self, ip, backend, user='', password=''):
+        if backend == 'rmcp':
+            interface = interfaces.create_interface(
+                interface='rmcp', slave_address=0x81, host_target_address=0x20,
+                keep_alive_interval=2)
+        elif backend == 'ipmitool':
+            interface = interfaces.create_interface(
+                'ipmitool', interface_type='lan')
+        else:
+            raise ValueError('Unknown IPMI backend')
+
         self.ipmi = create_connection(interface)
         self.ipmi.session.set_session_type_rmcp(host=ip, port=623)
-        self.ipmi.session.set_auth_type_user(username='', password='')
-        self.ipmi.target = Target(ipmb_address=0x82)
+        self.ipmi.session.set_auth_type_user(username=user, password=password)
+        self.ipmi.target = Target(
+            ipmb_address=0x82, routing=[(0x81, 0x20, 0), (0x20, 0x82, None)])
         self.ipmi.session.establish()
 
     def create_amc_fru_records(self, **kwargs):
