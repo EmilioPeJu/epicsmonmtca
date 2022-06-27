@@ -191,6 +191,8 @@ class EpicsMonMTCA(object):
         for entry in sdr_entries:
             if hasattr(entry, 'device_id_string'):
                 entry.name = entry.device_id_string.decode()
+            else:
+                entry.name = ''
 
         for entry in sdr_entries:
             if entry.type == sdr.SDR_TYPE_COMPACT_SENSOR_RECORD and \
