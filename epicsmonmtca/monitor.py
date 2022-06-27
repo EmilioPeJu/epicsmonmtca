@@ -17,7 +17,7 @@ from epicsmonmtca.ipmiutils import (hs_states2string, get_sdr_egu,
 from epicsmonmtca.manifest import create_manifest
 from epicsmonmtca.mtcautils import (entity_to_slot_id, get_slot_fru_id,
                                     MTCAModule, valid_mtca_module_types)
-from epicsmonmtca.timeutils import reset_timer, wait_period
+from epicsmonmtca.timeutils import reset_timer, time_ms, wait_period
 
 log = logging.getLogger(__name__)
 sel_log = logging.getLogger('sel')
@@ -51,6 +51,11 @@ class EpicsMonMTCA(object):
         self._quit_sel_thread = False
         self.sensor_polling_period = DEFAULT_SENSOR_POLLING_PERIOD
         self.sel_polling_period = DEFAULT_SEL_POLLING_PERIOD
+        self._sensor_value_delay = {}
+        self._time_logging = False
+
+    def set_time_logging(self, val):
+        self._time_logging = val
 
     def get_slot_module(self, slot_id):
         return self.slots.get(slot_id)
@@ -304,8 +309,17 @@ class EpicsMonMTCA(object):
             for (sdr_i, record, typ) in self._to_monitor:
                 try:
                     with self.ipmi_lock:
+                        ms1 = time_ms()
+
                         (raw, status) = self.ipmi.get_sensor_reading(
                             sdr_i.number, sdr_i.owner_lun)
+
+                        if self._time_logging:
+                            ms2 = time_ms()
+                            delay = ms2 - ms1
+                            cnt = self._sensor_value_delay.setdefault(delay, 0)
+                            self._sensor_value_delay[delay] = cnt + 1
+
                 except Exception as e:
                     log.error('Error requesting %s: %s', sdr_i.name, e)
                 if raw is None:  # value is not available
@@ -322,3 +336,12 @@ class EpicsMonMTCA(object):
                     record.set(hs_states2string.get(status & 0xff, 'Unknown'))
 
             wait_period(POLLING_TIMER, self.sensor_polling_period)
+
+    def dump_timing(self):
+        total = 0
+        for delay in sorted(self._sensor_value_delay):
+            count = self._sensor_value_delay[delay]
+            total += count
+            print('{} ms - {} times'.format(delay, count))
+
+        print('Total count: {}'.format(total))
