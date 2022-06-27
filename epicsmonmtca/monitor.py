@@ -342,6 +342,11 @@ class EpicsMonMTCA(object):
 
             wait_period(POLLING_TIMER, self.sensor_polling_period)
 
+    def dump_sensors(self):
+        for index, entry in self._sensor_index.items():
+            print('name: {} number: {} lun: {}'.format(entry.name, index[0],
+                                                       index[1]))
+
     def dump_timing(self):
         total = 0
         for delay in sorted(self._sensor_value_delay):
