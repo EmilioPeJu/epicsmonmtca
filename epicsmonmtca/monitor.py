@@ -170,28 +170,18 @@ class EpicsMonMTCA(object):
         if not slot_id:
             return
 
-        try:
-            (raw, states) = self.ipmi.get_sensor_reading(entry.number,
-                                                         entry.owner_lun)
-        except errors.CompletionCodeError as e:
-            log.error(
-                'Got bad completion code while getting sensor reading: %s', e)
-            log.error('Ignoring %s', entry.name)
-            return
-
-        if states & 0x1 == 0:  # check if slot is installed (not in M0)
-            mtca_mod = self.get_slot_module(slot_id)
+        mtca_mod = self.get_slot_module(slot_id)
+        if not mtca_mod:
+            mtca_mod = self.create_slot_module(slot_id)
             if not mtca_mod:
-                mtca_mod = self.create_slot_module(slot_id)
-                if not mtca_mod:
-                    return
-                mtca_mod.sensors.append(entry)
+                return
+            mtca_mod.sensors.append(entry)
 
-            infotype = InfoType.HOTSWAP
-            record = builder.stringIn(
-                get_sensor_pv_suffix(slot_id, entry.name))
-            self._sensor_index[(entry.number, entry.owner_lun)] = entry
-            self._to_monitor.append(SensorWatch(entry, record, infotype))
+        infotype = InfoType.HOTSWAP
+        record = builder.stringIn(
+            get_sensor_pv_suffix(slot_id, entry.name))
+        self._sensor_index[(entry.number, entry.owner_lun)] = entry
+        self._to_monitor.append(SensorWatch(entry, record, infotype))
 
     def process_sdr_repository(self, **kwargs):
         sdr_entries = list(self.ipmi.sdr_repository_entries())
