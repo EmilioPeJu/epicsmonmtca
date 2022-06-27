@@ -170,8 +170,15 @@ class EpicsMonMTCA(object):
         if not slot_id:
             return
 
-        (raw, states) = self.ipmi.get_sensor_reading(entry.number,
-                                                     entry.owner_lun)
+        try:
+            (raw, states) = self.ipmi.get_sensor_reading(entry.number,
+                                                         entry.owner_lun)
+        except errors.CompletionCodeError as e:
+            log.error(
+                'Got bad completion code while getting sensor reading: %s', e)
+            log.error('Ignoring %s', entry.name)
+            return
+
         if states & 0x1 == 0:  # check if slot is installed (not in M0)
             mtca_mod = self.get_slot_module(slot_id)
             if not mtca_mod:
