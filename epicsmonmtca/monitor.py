@@ -8,7 +8,7 @@ from os import path
 from collections import namedtuple
 from datetime import datetime
 
-from pyipmi import create_connection, interfaces, sensor, sdr, Target
+from pyipmi import create_connection, interfaces, sensor, sdr, Target, errors
 from softioc import softioc, builder, alarm
 
 from epicsmonmtca.epicsutils import get_sensor_pv_suffix
@@ -67,7 +67,12 @@ class EpicsMonMTCA(object):
             return None
 
         log.info('Identifying module %s%d', slot_id[0], slot_id[1])
-        fru = self.ipmi.get_fru_inventory(fru_id)
+        try:
+            fru = self.ipmi.get_fru_inventory(fru_id)
+        except errors.CompletionCodeError as e:
+            log.error('Got bad completion code while getting fru: %s', e)
+            return None
+
         self.slots[slot_id] = MTCAModule(slot_id, fru)
         return self.slots[slot_id]
 
