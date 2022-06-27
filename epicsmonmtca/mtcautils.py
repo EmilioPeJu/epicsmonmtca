@@ -54,6 +54,9 @@ class MTCAModule(object):
         self.fru = fru
         self.sensors = []
 
+    def add_sensor(self, sensor):
+        self.sensors.append(sensor)
+
     @property
     def manufacturer(self):
         return self.fru.product_info_area.manufacturer.value

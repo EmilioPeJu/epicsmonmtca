@@ -153,7 +153,7 @@ class EpicsMonMTCA(object):
         if not mtca_mod:
             return  # ignore sensors for cards not inserted
 
-        mtca_mod.sensors.append(entry)
+        mtca_mod.add_sensor(entry)
         infotype = InfoType.COMPACT
         EGU = get_sdr_egu(entry)
         record = builder.aIn(
