@@ -27,7 +27,6 @@ POLLING_TIMER = 0
 DEFAULT_SEL_POLLING_PERIOD = 1000  # ms
 SEL_TIMER = 1
 
-HS_SENSOR_SUFFIX = 'HS'
 SensorWatch = namedtuple('SensorWatch', ['sdr', 'record', 'type'])
 
 
@@ -193,7 +192,7 @@ class EpicsMonMTCA(object):
 
         for entry in sdr_entries:
             if entry.type == sdr.SDR_TYPE_COMPACT_SENSOR_RECORD and \
-                    entry.name.endswith(HS_SENSOR_SUFFIX):
+                    entry.sensor_type_code == sensor.SENSOR_TYPE_FRU_HOT_SWAP:
                 # HS sensors should be handled first, as they are used to
                 # know which slots are present
                 self._handle_sdr_hs_sensor(entry)
@@ -202,7 +201,7 @@ class EpicsMonMTCA(object):
             if entry.type == sdr.SDR_TYPE_FULL_SENSOR_RECORD:
                 self._handle_sdr_full_sensor_record(entry)
             elif entry.type == sdr.SDR_TYPE_COMPACT_SENSOR_RECORD and \
-                    not entry.name.endswith(HS_SENSOR_SUFFIX):
+                    entry.sensor_type_code != sensor.SENSOR_TYPE_FRU_HOT_SWAP:
                 self._handle_sdr_compact_sensor_record(entry)
 
     def watch_sensors(self, polling_period=None):
