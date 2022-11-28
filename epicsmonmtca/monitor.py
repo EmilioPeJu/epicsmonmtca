@@ -120,7 +120,8 @@ class EpicsMonMTCA(object):
                     **kwargs)
 
     def _handle_sdr_full_sensor_record(self, entry):
-        log.info('Monitoring full sensor for %s', entry.name)
+        log.info('Monitoring full sensor for %s (number %d, lun %d)',
+                 entry.name, entry.number, entry.owner_lun)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
@@ -141,7 +142,8 @@ class EpicsMonMTCA(object):
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
     def _handle_sdr_compact_sensor_record(self, entry):
-        log.info(f'Monitoring compact sensor for %s', entry.name)
+        log.info('Monitoring compact sensor for %s (number %d, lun %d)',
+                 entry.name, entry.number, entry.owner_lun)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
@@ -162,7 +164,8 @@ class EpicsMonMTCA(object):
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
     def _handle_sdr_hs_sensor(self, entry):
-        log.info('Monitoring HS compact sensor for %s', entry.name)
+        log.info('Monitoring hotswap sensor for %s (number %d, lun %d)',
+                 entry.name, entry.number, entry.owner_lun)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
