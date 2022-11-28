@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import decimal
+from math import floor, log10
+
 
 _units2_table = [
     "", "C", "F", "K", "V", "A", "W", "J", "Coulombs", "VA",
@@ -68,11 +69,13 @@ def get_sdr_prec(entry):
     delta = entry.convert_sensor_raw_to_value(0) - \
         entry.convert_sensor_raw_to_value(1)
     offset = entry.convert_sensor_raw_to_value(0)
-    if delta.is_integer() and offset.is_integer():
-        worst_case = 0
-    else:
-        worst_case = min(
-            decimal.Decimal(str(delta)).as_tuple().exponent,
-            decimal.Decimal(str(offset)).as_tuple().exponent
-        )
-    return -worst_case if worst_case < 0 else 0
+    delta_frac = delta % 1
+    offset_frac = offset % 1
+    prec = 0
+    if delta_frac != 0.0:
+        prec = int(max(prec, -floor(log10(abs(delta_frac)))))
+
+    if offset_frac != 0.0:
+        prec = int(max(prec, -floor(log10(abs(offset_frac)))))
+
+    return prec
