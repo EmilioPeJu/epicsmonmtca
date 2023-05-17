@@ -120,8 +120,11 @@ class EpicsMonMTCA(object):
                     **kwargs)
 
     def _handle_sdr_full_sensor_record(self, entry):
-        log.info('Monitoring full sensor for %s (number %d, lun %d)',
-                 entry.name, entry.number, entry.owner_lun)
+        log.info(
+            'Monitoring full sensor sensor for '
+            '%s (number %d, lun %d, ent %d, ins %d)',
+             entry.name, entry.number, entry.owner_lun, entry.entity_id,
+             entry.entity_instance)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
@@ -136,14 +139,22 @@ class EpicsMonMTCA(object):
         infotype = InfoType.FULL
         EGU = get_sdr_egu(entry)
         PREC = get_sdr_prec(entry)
-        record = builder.aIn(
-            get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU, PREC=PREC)
+        try:
+            record = builder.aIn(
+                get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU, PREC=PREC)
+        except Exception as e:
+            log.error('Failed to add PV: %s', e)
+            return
+
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
     def _handle_sdr_compact_sensor_record(self, entry):
-        log.info('Monitoring compact sensor for %s (number %d, lun %d)',
-                 entry.name, entry.number, entry.owner_lun)
+        log.info(
+            'Monitoring compact sensor for '
+            '%s (number %d, lun %d, ent %d, ins %d)',
+             entry.name, entry.number, entry.owner_lun, entry.entity_id,
+             entry.entity_instance)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
@@ -157,15 +168,22 @@ class EpicsMonMTCA(object):
         mtca_mod.add_sensor(entry)
         infotype = InfoType.COMPACT
         EGU = get_sdr_egu(entry)
-        record = builder.aIn(
-            get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU)
+        try:
+            record = builder.aIn(
+                get_sensor_pv_suffix(slot_id, entry.name), EGU=EGU)
+        except Exception as e:
+            log.error('Failed to add PV: %s', e)
+            return
 
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
     def _handle_sdr_hs_sensor(self, entry):
-        log.info('Monitoring hotswap sensor for %s (number %d, lun %d)',
-                 entry.name, entry.number, entry.owner_lun)
+        log.info(
+            'Monitoring hotswap sensor for '
+            '%s (number %d, lun %d, ent %d, ins %d)',
+             entry.name, entry.number, entry.owner_lun, entry.entity_id,
+             entry.entity_instance)
         entity_id = entry.entity_id
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
@@ -180,8 +198,12 @@ class EpicsMonMTCA(object):
             mtca_mod.sensors.append(entry)
 
         infotype = InfoType.HOTSWAP
-        record = builder.stringIn(
-            get_sensor_pv_suffix(slot_id, entry.name))
+        try:
+            record = builder.stringIn(
+                get_sensor_pv_suffix(slot_id, entry.name))
+        except Exception as e:
+            log.error('Failed to add PV: %s', e)
+            return
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
         self._to_monitor.append(SensorWatch(entry, record, infotype))
 
