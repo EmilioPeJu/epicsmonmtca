@@ -28,6 +28,8 @@ def get_slot_fru_id(slot_id):
 
 
 def entity_to_slot_id(entity_id, instance_id):
+    instance_id &= 0x7f
+
     if entity_id == 0xc2 and instance_id > 0 and instance_id < 10:
         return ("CARRIER", instance_id)
     elif entity_id == 0xc1 \
