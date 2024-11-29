@@ -61,27 +61,45 @@ class MTCAModule(object):
 
     @property
     def manufacturer(self):
-        return self.fru.product_info_area.manufacturer.value
+        try:
+            return self.fru.product_info_area.manufacturer.value
+        except AttributeError:
+            return ''
 
     @property
     def part_number(self):
-        return self.fru.product_info_area.part_number.value
+        try:
+            return self.fru.product_info_area.part_number.value
+        except AttributeError:
+            return ''
 
     @property
     def serial_number(self):
-        return self.fru.product_info_area.serial_number.value
+        try:
+            return self.fru.product_info_area.serial_number.value
+        except AttributeError:
+            return ''
 
     @property
     def version(self):
-        return self.fru.product_info_area.version.value
+        try:
+            return self.fru.product_info_area.version.value
+        except AttributeError:
+            return ''
 
     @property
     def name(self):
-        return self.part_number
+        try:
+            return self.part_number
+        except AttributeError:
+            return ''
 
     @property
     def product_name(self):
-        return self.fru.board_info_area.product_name.value
+        try:
+            return self.fru.board_info_area.product_name.value
+        except AttributeError:
+            return ''
 
     def __repr__(self):
         return "<{} {}>".format(self.slot_id[0], self.name)
