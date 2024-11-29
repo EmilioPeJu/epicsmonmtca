@@ -37,7 +37,8 @@ class InfoType(object):
 
 
 class EpicsMonMTCA(object):
-    def __init__(self, mch_ip, backend='rmcp', user='', password=''):
+    def __init__(self, mch_ip, backend='rmcp', user='', password='',
+                 allowed_sensors=None):
         self._create_ipmi_session(mch_ip, backend, user, password)
         self._to_monitor = []
         self._sensor_index = {}
@@ -52,6 +53,7 @@ class EpicsMonMTCA(object):
         self.sel_polling_period = DEFAULT_SEL_POLLING_PERIOD
         self._sensor_value_delay = {}
         self._time_logging = False
+        self.allowed_sensors = allowed_sensors
 
     def set_time_logging(self, val):
         self._time_logging = val
@@ -119,9 +121,13 @@ class EpicsMonMTCA(object):
                     initial_value=self.slots[slot_id].product_name,
                     **kwargs)
 
+    def is_sensor_allowed(self, sensor_name):
+        return self.allowed_sensors is None or \
+            sensor_name in self.allowed_sensors
+
     def _handle_sdr_full_sensor_record(self, entry):
         log.info(
-            'Monitoring full sensor sensor for '
+            'Processing full sensor sensor for '
             '%s (number %d, lun %d, ent %d, ins %d)',
              entry.name, entry.number, entry.owner_lun, entry.entity_id,
              entry.entity_instance)
@@ -129,6 +135,10 @@ class EpicsMonMTCA(object):
         instance_id = entry.entity_instance
         slot_id = entity_to_slot_id(entity_id, instance_id)
         if not slot_id:
+            return
+
+        if not self.is_sensor_allowed(entry.name):
+            log.info('Ignoring sensor %s (not allowed)', entry.name)
             return
 
         mtca_mod = self.get_slot_module(slot_id)
@@ -151,7 +161,7 @@ class EpicsMonMTCA(object):
 
     def _handle_sdr_compact_sensor_record(self, entry):
         log.info(
-            'Monitoring compact sensor for '
+            'Processing compact sensor for '
             '%s (number %d, lun %d, ent %d, ins %d)',
              entry.name, entry.number, entry.owner_lun, entry.entity_id,
              entry.entity_instance)
@@ -164,6 +174,10 @@ class EpicsMonMTCA(object):
         mtca_mod = self.get_slot_module(slot_id)
         if not mtca_mod:
             return  # ignore sensors for cards not inserted
+
+        if not self.is_sensor_allowed(entry.name):
+            log.info('Ignoring sensor %s (not allowed)', entry.name)
+            return
 
         mtca_mod.add_sensor(entry)
         infotype = InfoType.COMPACT
@@ -180,7 +194,7 @@ class EpicsMonMTCA(object):
 
     def _handle_sdr_hs_sensor(self, entry):
         log.info(
-            'Monitoring hotswap sensor for '
+            'Processing hotswap sensor for '
             '%s (number %d, lun %d, ent %d, ins %d)',
              entry.name, entry.number, entry.owner_lun, entry.entity_id,
              entry.entity_instance)
@@ -195,8 +209,12 @@ class EpicsMonMTCA(object):
             mtca_mod = self.create_slot_module(slot_id)
             if not mtca_mod:
                 return
-            mtca_mod.sensors.append(entry)
 
+        if not self.is_sensor_allowed(entry.name):
+            log.info('Ignoring sensor %s (not allowed)', entry.name)
+            return
+
+        mtca_mod.sensors.append(entry)
         infotype = InfoType.HOTSWAP
         try:
             record = builder.stringIn(
@@ -205,7 +223,10 @@ class EpicsMonMTCA(object):
             log.error('Failed to add PV: %s', e)
             return
         self._sensor_index[(entry.number, entry.owner_lun)] = entry
-        self._to_monitor.append(SensorWatch(entry, record, infotype))
+        if self.is_sensor_allowed(entry.name):
+            self._to_monitor.append(SensorWatch(entry, record, infotype))
+        else:
+            log.info('Ignoring sensor %s (not allowed)', entry.name)
 
     def process_sdr_repository(self, **kwargs):
         sdr_entries = list(self.ipmi.sdr_repository_entries())
@@ -334,7 +355,8 @@ class EpicsMonMTCA(object):
                  len(self._to_monitor), self.sensor_polling_period)
         reset_timer(POLLING_TIMER, self.sensor_polling_period)
         while not self._quit_sensor_thread:
-            for (sdr_i, record, typ) in self._to_monitor:
+            for sensor_watch in list(self._to_monitor):
+                (sdr_i, record, typ) = sensor_watch
                 try:
                     with self.ipmi_lock:
                         ms1 = time_ms()
@@ -350,9 +372,12 @@ class EpicsMonMTCA(object):
 
                 except Exception as e:
                     log.error('Error requesting %s: %s', sdr_i.name, e)
+                    continue
+
                 if raw is None:  # value is not available
                     log.debug('Value for sensor %s (%d/%d) not available',
                               sdr_i.name, sdr_i.number, sdr_i.owner_lun)
+                    self._to_monitor.remove(sensor_watch)
                     continue
                 if typ == InfoType.FULL:
                     value = sdr_i.convert_sensor_raw_to_value(raw)

@@ -19,7 +19,6 @@ def create_manifest(slots, output_path):
 
 def parse_manifest(filepath):
     slots = {}
-    first_line = True
     slot_id = None
     with open(filepath, 'r') as fhandle:
         for line in fhandle:
@@ -30,7 +29,7 @@ def parse_manifest(filepath):
                 if not slot_id:
                     raise ValueError(
                         'No module associated to {}'.format(sline))
-                slots[slot_id].sensors.append(ManifestSensor(sline[1:]))
+                slots[slot_id].sensors.append(ManifestSensor(sline[2:]))
             else:
                 field, key = sline.split(':')
                 mod_type, mod_number = field.split(',')
@@ -40,3 +39,12 @@ def parse_manifest(filepath):
                 slots[slot_id] = ManifestModule(key, [])
 
     return slots
+
+
+def parse_manifest_sensor_names(filepath):
+    slots = parse_manifest(filepath)
+    sensors = []
+    for _, mod in slots.items():
+        sensors.extend([i.name for i in mod.sensors])
+
+    return sensors
